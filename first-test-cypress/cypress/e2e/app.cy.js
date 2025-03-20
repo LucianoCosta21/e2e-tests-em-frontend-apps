@@ -1,4 +1,5 @@
 import assert from 'assert';
+import { title } from 'process';
 class RegisterForm {
   elements = {
     titleInput: () => cy.get('#title'),
@@ -19,11 +20,14 @@ class RegisterForm {
   clickSubmit() {
     this.elements.submitBtn().click();
   }
+  hitEnter() {
+    cy.focused().type('{enter}');
+  }
 }
 const registerForm = new RegisterForm();
 const colors = {
   errors: 'rgb(220, 53, 69)',
-  success: '',
+  success: 'rgb(222, 226, 230)',
 };
 
 describe('Image Registration', () => {
@@ -66,6 +70,61 @@ describe('Image Registration', () => {
         const border = styles.getPropertyValue('border-right-color');
         assert.strictEqual(border, colors.errors);
       });
+    });
+  });
+
+  describe('Submitting an image with valid inputs using enter key', () => {
+    const input = {
+      title: 'Alien BR',
+      url: 'https://t3.ftcdn.net/jpg/01/26/77/44/360_F_126774473_owGnxkviYhvDovg6AsWO9gcGlqjk5eqj.jpg',
+    };
+    after(() => {
+      cy.clearAllLocalStorage();
+    });
+
+    it('Given I am on the image registration page', () => {
+      cy.visit('/');
+    });
+    it(`When I enter "${input.title}" in the title field`, () => {
+      registerForm.typeTitle(input.title);
+    });
+    it(`When I enter "${input.url}" in the URL field`, () => {
+      registerForm.typeUrl(input.url);
+    });
+    it('Then I should see a check icon in the imageUrl field', () => {
+      registerForm.elements.titleInput().should(([$input]) => {
+        const style = window.getComputedStyle($input);
+        const border = style.getPropertyValue('border-right-color');
+        assert.strictEqual(border, colors.success);
+      });
+    });
+    it('Then I can hit enter to submit the form', () => {
+      registerForm.hitEnter();
+      cy.wait(100);
+    });
+    it('And the list of registered images should be updated with the new item', () => {
+      cy.get('#card-list .card-img').should((elements) => {
+        const lastElement = elements[elements.length - 1];
+        const src = lastElement.getAttribute('src');
+        assert.strictEqual(src, input.url);
+      });
+    });
+
+    it('And the new item should be stored in the localStorag', () => {
+      cy.getAllLocalStorage().should((ls) => {
+        const currentLs = ls[window.location.origin];
+        const elements = JSON.parse(Object.values(currentLs));
+        const lastElement = elements[elements.length - 1];
+
+        assert.deepStrictEqual(lastElement, {
+          title: input.title,
+          imageUrl: input.url,
+        });
+      });
+    });
+    it('Then The inputs should be cleared', () => {
+      registerForm.elements.titleInput().should('have.value', '');
+      registerForm.elements.imageUrlInput().should('have.value', '');
     });
   });
 });
