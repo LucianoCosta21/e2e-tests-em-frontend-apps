@@ -1,0 +1,31 @@
+name: Cypress Tests - First Test Cypress
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'first-test-cypress/**.js'
+      - 'first-test-cypress/**.json'
+      - 'first-test-cypress/**.yml'
+
+jobs:
+  first-test-cypress-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./first-test-cypress
+
+      - name: Run Cypress tests
+        run: npm run cypress:headless
+        working-directory: ./first-test-cypress
