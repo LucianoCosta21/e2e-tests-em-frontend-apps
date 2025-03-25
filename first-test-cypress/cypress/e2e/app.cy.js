@@ -127,4 +127,39 @@ describe('Image Registration', () => {
       registerForm.elements.imageUrlInput().should('have.value', '');
     });
   });
+  describe('Refreshing the page after submitting an image clicking in the submit button', () => {
+    const input = {
+      title: 'Alien BR',
+      url: 'https://t3.ftcdn.net/jpg/01/26/77/44/360_F_126774473_owGnxkviYhvDovg6AsWO9gcGlqjk5eqj.jpg',
+    };
+
+    after(() => {
+      cy.clearAllLocalStorage();
+    });
+
+    it('Given I am on the image registration page', () => {
+      cy.visit('/');
+    });
+    it('Then I have submitted an image by clicking the submit button', () => {
+      registerForm.typeTitle(input.title);
+      registerForm.typeUrl(input.url);
+      registerForm.clickSubmit();
+      cy.wait(100);
+    });
+    it('When I refresh the page', () => {
+      cy.reload();
+    });
+    it('submitted image in the list of registered images', () => {
+      cy.getAllLocalStorage().should((ls) => {
+        const currentLs = ls[window.location.origin];
+        const elements = JSON.parse(Object.values(currentLs));
+        const lastElement = elements[elements.length - 1];
+
+        assert.deepStrictEqual(lastElement, {
+          title: input.title,
+          imageUrl: input.url,
+        });
+      });
+    });
+  });
 });
